@@ -55,10 +55,23 @@ func get_torrent(url string, client *http.Client) ([]byte, error) {
     return b_data, err
 }
 
+func get_existed_torrents(folder string) []os.FileInfo {
+    files, _ := ioutil.ReadDir("/tmp")
+    return files
+}
+
 func main() {
+
+    dat, _ := ioutil.ReadFile("/tmp/series_list")
+    series := strings.Split(string(dat), "\n")
+
+    if len(series) == 0 {
+        return
+    }
+
     url := "http://retre.org/rssdd.xml"
 
-    series := []string{"Звездный путь: Дискавери", "Орвилл", "Волшебники", "Хороший доктор", "Обратная сторона"}
+    //series := []string{"Звездный путь: Дискавери", "Орвилл", "Волшебники", "Хороший доктор", "Обратная сторона"}
     res := "1080p"
 
     var items Items
@@ -72,13 +85,18 @@ func main() {
     for _, i := range items.Items {
         
         in_series := false
-        for _, s := range series {
+        for _, s := range series[:len(series)-1] {
             in_series = strings.Contains(i.Title, s) && strings.Contains(i.Title, res)
         }
-
-        if !in_series {
-            continue
+        
+        downloaded := false
+        for _, f := range get_existed_torrents("/tmp") {
+            downloaded = strings.Contains(f.Name(), i.Title)
         }
+
+        if !in_series || downloaded {
+            continue
+        } 
 
         data, err := get_torrent(i.Link, client)
 
@@ -97,4 +115,5 @@ func main() {
             fmt.Println(fmt.Sprintf("FILE: %s. DL-success", i.Title))
         }
     }
+
 }

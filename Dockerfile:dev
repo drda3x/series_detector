@@ -1,0 +1,3 @@
+from golang:latest
+
+cmd  cd /go/src/series_detector && go run series_detector.go
